@@ -3,10 +3,7 @@ package org.example.manager;
 import org.example.db.DBConnectionProvider;
 import org.example.model.Author;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,13 +12,18 @@ public class AuthorManager {
     private Connection connection = DBConnectionProvider.getInstance().getConnection();
 
     public void add(Author author) {
-        String query = "INSERT into author(name,surname,age,email)VALUES ('%s','%s',%d,'%s')";
+
 //        String sql = "INSERT into author(name,surname,age,email)VALUES ('" + author.getName() + "','" + author.getSurname() + "'," + author.getAge() + ",'" + author.getEmail() + "')";
-        String sql = String.format(query, author.getName(), author.getSurname(), author.getAge(), author.getEmail());
-        try {
-            Statement statement = connection.createStatement();
-            statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
-            ResultSet generatedKeys = statement.getGeneratedKeys();
+//        String query = "INSERT into author(name,surname,age,email)VALUES ('%s','%s',%d,'%s')";
+//        String sql = String.format(query, author.getName(), author.getSurname(), author.getAge(), author.getEmail());
+        String query = "INSERT into author(name,surname,age,email)VALUES (?,?,?,?)";
+        try (PreparedStatement ps = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, author.getName());
+            ps.setString(2, author.getSurname());
+            ps.setInt(3, author.getAge());
+            ps.setString(4, author.getEmail());
+            ps.executeUpdate();
+            ResultSet generatedKeys = ps.getGeneratedKeys();
             if (generatedKeys.next()) {
                 int id = generatedKeys.getInt(1);
                 author.setId(id);
@@ -93,13 +95,13 @@ public class AuthorManager {
         }
 
         String query = "UPDATE author SET name = '%s',surname= '%s', age = %d, email ='%s' WHERE id = %d";
-        String sql = String.format(query,author.getName(),author.getSurname(),author.getAge(),author.getEmail(),author.getId());
+        String sql = String.format(query, author.getName(), author.getSurname(), author.getAge(), author.getEmail(), author.getId());
         try {
             Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
             System.out.println("Author updated!!!");
         } catch (SQLException e) {
-          e.printStackTrace();
+            e.printStackTrace();
         }
     }
 }
